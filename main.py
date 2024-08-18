@@ -1,8 +1,8 @@
 from pymongo import MongoClient
 
-# URL koneksi MongoDB
-url = "mongodb+srv://dantesbot:wildan18@cluster0.fol5tml.mongodb.net/?retryWrites=true&w=majority"
-client = MongoClient(url)
+# URL koneksi MongoDB tanpa nama database spesifik
+base_url = "mongodb+srv://dantesbot:wildan18@cluster0.fol5tml.mongodb.net/?retryWrites=true&w=majority"
+client = MongoClient(base_url)
 
 def list_databases():
     """Menampilkan semua database dan koleksi yang tersedia."""
@@ -31,13 +31,19 @@ def delete_all_collections():
             print(f"Semua koleksi dalam database '{db_name}' telah dihapus.")
 
 def create_database():
-    """Membuat database baru dengan nama yang diminta pengguna."""
+    """Membuat database baru dengan nama yang diminta pengguna dan menampilkan URI."""
     db_name = input("Masukkan nama database baru: ")
     if db_name in client.list_database_names():
         print(f"Database '{db_name}' sudah ada.")
     else:
+        # Membuat database dengan menyertakan koleksi untuk memastikan database dibuat
         db = client[db_name]
+        db.test_collection.insert_one({"test": "data"})
+        client.drop_database(db_name)  # Hapus database dan koleksi test setelah mendapatkan URI
+        # Membangun URI
+        new_uri = f"mongodb+srv://dantesbot:wildan18@cluster0.fol5tml.mongodb.net/{db_name}?retryWrites=true&w=majority"
         print(f"Database '{db_name}' telah dibuat.")
+        print(f"URI koneksi untuk database '{db_name}': {new_uri}")
 
 def main():
     """Fungsi utama untuk menampilkan menu dan menangani pilihan pengguna."""
