@@ -114,14 +114,14 @@ def view_collection(db, collection_name):
 def edit_collection(db, collection_name):
     """Mengedit dokumen dalam koleksi yang dipilih."""
     collection = db[collection_name]
-    query = {}
-
-    # Menampilkan dokumen yang sesuai dengan query
+    
     print("Masukkan kriteria pencarian dokumen untuk diedit (kosongkan untuk memilih semua dokumen).")
     field = input("Field: ")
     if field:
         value = input(f"Nilai untuk field '{field}': ")
-        query[field] = value
+        query = {field: value}
+    else:
+        query = {}
 
     documents = list(collection.find(query))
     
@@ -136,13 +136,30 @@ def edit_collection(db, collection_name):
                 return
             elif 1 <= doc_choice <= len(documents):
                 selected_doc = documents[doc_choice - 1]
-                update_document(collection, selected_doc)
+                # Memanggil fungsi untuk mengganti nilai spesifik
+                replace_value(collection, selected_doc)
             else:
                 print("Pilihan tidak valid. Silakan coba lagi.")
         except ValueError:
             print("Masukkan nomor yang valid.")
     else:
         print("Tidak ada dokumen yang ditemukan dengan kriteria tersebut.")
+
+def replace_value(collection, document):
+    """Mengganti nilai tertentu dalam dokumen."""
+    print("\nDokumen yang dipilih untuk diedit:")
+    print(document)
+
+    old_value = input("Masukkan nilai lama yang ingin diganti: ")
+    new_value = input("Masukkan nilai baru: ")
+    
+    # Mengupdate dokumen dengan nilai baru
+    result = collection.update_many(
+        { '_id': old_value },
+        { '$set': { '_id': new_value } }
+    )
+
+    print(f"Jumlah dokumen yang diperbarui: {result.modified_count}")
 
 def update_document(collection, document):
     """Memperbarui field dalam dokumen yang dipilih."""
