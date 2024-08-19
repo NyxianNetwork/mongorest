@@ -28,16 +28,36 @@ def list_databases(client):
 
     # Memilih database berdasarkan nomor
     try:
-        db_choice = int(input("Pilih nomor database untuk melihat koleksi (atau 0 untuk kembali): "))
+        db_choice = int(input("Pilih nomor database untuk melihat koleksi atau opsi lain (atau 0 untuk kembali): "))
         if db_choice == 0:
             return
         elif 1 <= db_choice <= len(databases):
             selected_db_name = databases[db_choice - 1]
-            list_collections(client, selected_db_name)
+            handle_database_options(client, selected_db_name)
         else:
             print("Pilihan tidak valid. Silakan coba lagi.")
     except ValueError:
         print("Masukkan nomor yang valid.")
+
+def handle_database_options(client, db_name):
+    """Menampilkan opsi untuk koleksi atau penghapusan database."""
+    while True:
+        print(f"\nAnda memilih database: '{db_name}'")
+        print("1 - Lihat koleksi")
+        print("2 - Hapus database ini")
+        print("3 - Kembali")
+
+        choice = input("Pilih opsi (1, 2, 3): ")
+
+        if choice == '1':
+            list_collections(client, db_name)
+        elif choice == '2':
+            delete_database(client, db_name)
+            break
+        elif choice == '3':
+            break
+        else:
+            print("Pilihan tidak valid. Silakan coba lagi.")
 
 def list_collections(client, db_name):
     """Menampilkan semua koleksi dalam database yang dipilih dengan pilihan nomor."""
@@ -70,6 +90,15 @@ def view_collection(db, collection_name):
     print(f"Beberapa dokumen dalam koleksi '{collection_name}':")
     for doc in documents:
         print(doc)
+
+def delete_database(client, db_name):
+    """Menghapus database yang dipilih."""
+    confirm = input(f"Apakah Anda yakin ingin menghapus database '{db_name}'? (ketik 'y' untuk konfirmasi): ")
+    if confirm.lower() == 'y':
+        client.drop_database(db_name)
+        print(f"Database '{db_name}' telah dihapus.")
+    else:
+        print("Penghapusan database dibatalkan.")
 
 def delete_all_collections(client):
     """Menghapus semua koleksi dalam semua database."""
