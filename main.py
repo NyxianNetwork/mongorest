@@ -9,12 +9,16 @@ mongo_uris = {
 
 def choose_mongo_uri():
     """Memilih MongoDB URI untuk digunakan."""
+    if not mongo_uris:
+        print("Tidak ada MongoDB URI yang tersedia. Tambahkan satu terlebih dahulu.")
+        add_mongo_uri()
+
     print("Pilih MongoDB URI:")
     for key, uri in mongo_uris.items():
         print(f"{key} - {uri}")
     
     while True:
-        choice = input("Pilih nomor URI (1 atau 2): ")
+        choice = input("Pilih nama URI: ")
         if choice in mongo_uris:
             return MongoClient(mongo_uris[choice])
         else:
@@ -155,35 +159,11 @@ def replace_value(collection, document):
     
     # Mengupdate dokumen dengan nilai baru
     result = collection.update_many(
-        { '_id': old_value },
-        { '$set': { '_id': new_value } }
+        { '_id': int(old_value) },
+        { '$set': { '_id': int(new_value) } }
     )
 
     print(f"Jumlah dokumen yang diperbarui: {result.modified_count}")
-
-def update_document(collection, document):
-    """Memperbarui field dalam dokumen yang dipilih."""
-    print("\nDokumen yang dipilih untuk diedit:")
-    print(document)
-
-    # Memperbarui field ADMIN_IDS atau FSUB_IDS
-    print("Pilih field yang ingin diubah:")
-    print("1 - ADMIN_IDS")
-    print("2 - FSUB_IDS")
-    choice = input("Pilih opsi (1, 2): ")
-
-    if choice == '1':
-        new_value = input("Masukkan nilai baru untuk ADMIN_IDS (pisahkan dengan koma jika lebih dari satu): ")
-        new_ids = [int(x) for x in new_value.split(',')]
-        collection.update_one({"_id": document["_id"]}, {"$set": {"ADMIN_IDS": new_ids}})
-        print("Field ADMIN_IDS telah diperbarui.")
-    elif choice == '2':
-        new_value = input("Masukkan nilai baru untuk FSUB_IDS (pisahkan dengan koma jika lebih dari satu): ")
-        new_ids = [int(x) for x in new_value.split(',')]
-        collection.update_one({"_id": document["_id"]}, {"$set": {"FSUB_IDS": new_ids}})
-        print("Field FSUB_IDS telah diperbarui.")
-    else:
-        print("Pilihan tidak valid.")
 
 def delete_database(client, db_name):
     """Menghapus database yang dipilih."""
@@ -218,31 +198,65 @@ def create_database(client):
         print(f"Database '{db_name}' telah dibuat.")
         print(f"URI koneksi untuk database '{db_name}': {client[db_name].client.address}")
 
+def add_mongo_uri():
+    """Menambahkan MongoDB URI ke daftar."""
+    name = input("Masukkan nama untuk MongoDB URI baru: ")
+    uri = input("Masukkan MongoDB URI: ")
+    
+    if name in mongo_uris:
+        print(f"Nama '{name}' sudah ada. Gunakan nama yang berbeda.")
+    else:
+        mongo_uris[name] = uri
+        print(f"MongoDB URI '{name}' berhasil ditambahkan.")
+
+def remove_mongo_uri():
+    """Menghapus MongoDB URI dari daftar."""
+    print("Daftar MongoDB URI yang tersedia:")
+    for key, uri in mongo_uris.items():
+        print(f"{key} - {uri}")
+
+    name = input("Masukkan nama MongoDB URI yang ingin dihapus: ")
+    
+    if name in mongo_uris:
+        del mongo_uris[name]
+        print(f"MongoDB URI '{name}' berhasil dihapus.")
+    else:
+        print(f"MongoDB URI '{name}' tidak ditemukan.")
+
 def main():
     """Fungsi utama untuk menampilkan menu dan menangani pilihan pengguna."""
-    client = choose_mongo_uri()  # Memilih MongoDB URI saat memulai program
-
     while True:
         print("\nPilihan:")
         print("1 - Lihat database yang tersedia")
         print("2 - Hapus semua koleksi")
         print("3 - Buat database")
-        print("4 - Keluar")
+        print("4 - Tambah MongoDB URI")
+        print("5 - Hapus MongoDB URI")
+        print("6 - Pilih MongoDB URI lain")
+        print("7 - Keluar")
 
-        choice = input("Pilih opsi (1, 2, 3, 4): ")
+        choice = input("Pilih opsi (1, 2, 3, 4, 5, 6, 7): ")
 
         if choice == '1':
+            client = choose_mongo_uri()
             list_databases(client)
         elif choice == '2':
+            client = choose_mongo_uri()
             delete_all_collections(client)
         elif choice == '3':
+            client = choose_mongo_uri()
             create_database(client)
         elif choice == '4':
+            add_mongo_uri()
+        elif choice == '5':
+            remove_mongo_uri()
+        elif choice == '6':
+            client = choose_mongo_uri()
+        elif choice == '7':
             print("Keluar dari program.")
             break
-
-
-
+        else:
+            print("Pilihan tidak valid. Silakan coba lagi.")
 
 if __name__ == "__main__":
     main()
