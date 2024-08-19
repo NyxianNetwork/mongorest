@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 
 # URL koneksi MongoDB tanpa nama database spesifik
-base_url = "mongodb+srv://dantesbot:wildan18@cluster0.fol5tml.mongodb.net/?retryWrites=true&w=majority"
+base_url = "mongodb+srv://musicv2:fadhil123@cluster0.pjw9x0n.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(base_url)
 
 def list_databases():
