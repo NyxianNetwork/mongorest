@@ -18,17 +18,43 @@ def list_databases():
             return
         elif 1 <= db_choice <= len(databases):
             selected_db_name = databases[db_choice - 1]
-            db = client[selected_db_name]
-
-            # Menampilkan semua koleksi dalam database yang dipilih
-            collections = db.list_collection_names()
-            print(f"Koleksi dalam database '{selected_db_name}':")
-            for collection_name in collections:
-                print(f"  - {collection_name}")
+            list_collections(selected_db_name)
         else:
             print("Pilihan tidak valid. Silakan coba lagi.")
     except ValueError:
         print("Masukkan nomor yang valid.")
+
+def list_collections(db_name):
+    """Menampilkan semua koleksi dalam database yang dipilih dengan pilihan nomor."""
+    db = client[db_name]
+    collections = db.list_collection_names()
+    if collections:
+        print(f"Koleksi dalam database '{db_name}':")
+        for i, collection_name in enumerate(collections, start=1):
+            print(f"{i}. {collection_name}")
+
+        # Memilih koleksi berdasarkan nomor
+        try:
+            collection_choice = int(input("Pilih nomor koleksi untuk melihat data (atau 0 untuk kembali): "))
+            if collection_choice == 0:
+                return
+            elif 1 <= collection_choice <= len(collections):
+                selected_collection_name = collections[collection_choice - 1]
+                view_collection(db, selected_collection_name)
+            else:
+                print("Pilihan tidak valid. Silakan coba lagi.")
+        except ValueError:
+            print("Masukkan nomor yang valid.")
+    else:
+        print(f"Tidak ada koleksi dalam database '{db_name}'.")
+
+def view_collection(db, collection_name):
+    """Menampilkan beberapa dokumen pertama dalam koleksi yang dipilih."""
+    collection = db[collection_name]
+    documents = collection.find().limit(5)  # Membatasi tampilan ke 5 dokumen pertama
+    print(f"Beberapa dokumen dalam koleksi '{collection_name}':")
+    for doc in documents:
+        print(doc)
 
 def delete_all_collections():
     """Menghapus semua koleksi dalam semua database."""
