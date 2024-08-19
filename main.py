@@ -75,13 +75,32 @@ def list_collections(client, db_name):
                 return
             elif 1 <= collection_choice <= len(collections):
                 selected_collection_name = collections[collection_choice - 1]
-                view_collection(db, selected_collection_name)
+                handle_collection_options(db, selected_collection_name)
             else:
                 print("Pilihan tidak valid. Silakan coba lagi.")
         except ValueError:
             print("Masukkan nomor yang valid.")
     else:
         print(f"Tidak ada koleksi dalam database '{db_name}'.")
+
+def handle_collection_options(db, collection_name):
+    """Menampilkan opsi untuk melihat atau mengedit koleksi yang dipilih."""
+    while True:
+        print(f"\nAnda memilih koleksi: '{collection_name}'")
+        print("1 - Lihat dokumen")
+        print("2 - Edit dokumen")
+        print("3 - Kembali")
+
+        choice = input("Pilih opsi (1, 2, 3): ")
+
+        if choice == '1':
+            view_collection(db, collection_name)
+        elif choice == '2':
+            edit_collection(db, collection_name)
+        elif choice == '3':
+            break
+        else:
+            print("Pilihan tidak valid. Silakan coba lagi.")
 
 def view_collection(db, collection_name):
     """Menampilkan beberapa dokumen pertama dalam koleksi yang dipilih."""
@@ -90,6 +109,52 @@ def view_collection(db, collection_name):
     print(f"Beberapa dokumen dalam koleksi '{collection_name}':")
     for doc in documents:
         print(doc)
+
+def edit_collection(db, collection_name):
+    """Mengedit dokumen dalam koleksi yang dipilih."""
+    collection = db[collection_name]
+    query = {}
+
+    # Menampilkan dokumen yang sesuai dengan query
+    print("Masukkan kriteria pencarian dokumen untuk diedit (kosongkan untuk memilih semua dokumen).")
+    field = input("Field: ")
+    if field:
+        value = input(f"Nilai untuk field '{field}': ")
+        query[field] = value
+
+    documents = list(collection.find(query))
+    
+    if documents:
+        print(f"\nDokumen yang ditemukan: {len(documents)}")
+        for i, doc in enumerate(documents, start=1):
+            print(f"{i}. {doc}")
+
+        try:
+            doc_choice = int(input("Pilih nomor dokumen untuk diedit (atau 0 untuk kembali): "))
+            if doc_choice == 0:
+                return
+            elif 1 <= doc_choice <= len(documents):
+                selected_doc = documents[doc_choice - 1]
+                update_document(collection, selected_doc)
+            else:
+                print("Pilihan tidak valid. Silakan coba lagi.")
+        except ValueError:
+            print("Masukkan nomor yang valid.")
+    else:
+        print("Tidak ada dokumen yang ditemukan dengan kriteria tersebut.")
+
+def update_document(collection, document):
+    """Memperbarui field dalam dokumen yang dipilih."""
+    print("\nDokumen yang dipilih untuk diedit:")
+    print(document)
+    
+    field = input("Field mana yang ingin diubah: ")
+    if field in document:
+        new_value = input(f"Masukkan nilai baru untuk field '{field}': ")
+        collection.update_one({"_id": document["_id"]}, {"$set": {field: new_value}})
+        print("Dokumen telah diperbarui.")
+    else:
+        print(f"Field '{field}' tidak ditemukan dalam dokumen.")
 
 def delete_database(client, db_name):
     """Menghapus database yang dipilih."""
