@@ -3,8 +3,7 @@ from pymongo import MongoClient
 # Daftar URL koneksi MongoDB
 mongo_uris = {
     "1": "mongodb+srv://MongoFwb:arab123@cluster0.x4azcc8.mongodb.net/?retryWrites=true&w=majority",
-    "2": "mongodb+srv://dantesbot:wildan18@cluster0.fol5tml.mongodb.net/?retryWrites=true&w=majority",
-    "3": "mongodb+srv://nydhfile:deckro1@deckro1.yqikogu.mongodb.net/?retryWrites=true&w=majority&appName=deckro1"
+    "2": "mongodb+srv://dantesbot:wildan18@cluster0.fol5tml.mongodb.net/?retryWrites=true&w=majority"
 }
 
 def choose_mongo_uri():
@@ -148,14 +147,25 @@ def update_document(collection, document):
     """Memperbarui field dalam dokumen yang dipilih."""
     print("\nDokumen yang dipilih untuk diedit:")
     print(document)
-    
-    field = input("Field mana yang ingin diubah: ")
-    if field in document:
-        new_value = input(f"Masukkan nilai baru untuk field '{field}': ")
-        collection.update_one({"_id": document["_id"]}, {"$set": {field: new_value}})
-        print("Dokumen telah diperbarui.")
+
+    # Memperbarui field ADMIN_IDS atau FSUB_IDS
+    print("Pilih field yang ingin diubah:")
+    print("1 - ADMIN_IDS")
+    print("2 - FSUB_IDS")
+    choice = input("Pilih opsi (1, 2): ")
+
+    if choice == '1':
+        new_value = input("Masukkan nilai baru untuk ADMIN_IDS (pisahkan dengan koma jika lebih dari satu): ")
+        new_ids = [int(x) for x in new_value.split(',')]
+        collection.update_one({"_id": document["_id"]}, {"$set": {"ADMIN_IDS": new_ids}})
+        print("Field ADMIN_IDS telah diperbarui.")
+    elif choice == '2':
+        new_value = input("Masukkan nilai baru untuk FSUB_IDS (pisahkan dengan koma jika lebih dari satu): ")
+        new_ids = [int(x) for x in new_value.split(',')]
+        collection.update_one({"_id": document["_id"]}, {"$set": {"FSUB_IDS": new_ids}})
+        print("Field FSUB_IDS telah diperbarui.")
     else:
-        print(f"Field '{field}' tidak ditemukan dalam dokumen.")
+        print("Pilihan tidak valid.")
 
 def delete_database(client, db_name):
     """Menghapus database yang dipilih."""
@@ -212,8 +222,9 @@ def main():
         elif choice == '4':
             print("Keluar dari program.")
             break
-        else:
-            print("Pilihan tidak valid. Silakan pilih lagi.")
+
+
+
 
 if __name__ == "__main__":
     main()
