@@ -5,20 +5,30 @@ base_url = "mongodb+srv://MongoFwb:arab123@cluster0.x4azcc8.mongodb.net/?retryWr
 client = MongoClient(base_url)
 
 def list_databases():
-    """Menampilkan semua database dan koleksi yang tersedia."""
+    """Menampilkan semua database yang tersedia dengan pilihan nomor."""
     databases = client.list_database_names()
     print("Daftar database yang tersedia:")
-    for db_name in databases:
-        print(f"- {db_name}")
+    for i, db_name in enumerate(databases, start=1):
+        print(f"{i}. {db_name}")
 
-        # Mengakses database
-        db = client[db_name]
+    # Memilih database berdasarkan nomor
+    try:
+        db_choice = int(input("Pilih nomor database untuk melihat koleksi (atau 0 untuk kembali): "))
+        if db_choice == 0:
+            return
+        elif 1 <= db_choice <= len(databases):
+            selected_db_name = databases[db_choice - 1]
+            db = client[selected_db_name]
 
-        # Menampilkan semua koleksi dalam database
-        collections = db.list_collection_names()
-        print(f"  Koleksi dalam database '{db_name}':")
-        for collection_name in collections:
-            print(f"    - {collection_name}")
+            # Menampilkan semua koleksi dalam database yang dipilih
+            collections = db.list_collection_names()
+            print(f"Koleksi dalam database '{selected_db_name}':")
+            for collection_name in collections:
+                print(f"  - {collection_name}")
+        else:
+            print("Pilihan tidak valid. Silakan coba lagi.")
+    except ValueError:
+        print("Masukkan nomor yang valid.")
 
 def delete_all_collections():
     """Menghapus semua koleksi dalam semua database."""
