@@ -1,10 +1,25 @@
 from pymongo import MongoClient
 
-# URL koneksi MongoDB tanpa nama database spesifik
-base_url = "mongodb+srv://MongoFwb:arab123@cluster0.x4azcc8.mongodb.net/?retryWrites=true&w=majority"
-client = MongoClient(base_url)
+# Daftar URL koneksi MongoDB
+mongo_uris = {
+    "1": "mongodb+srv://MongoFwb:arab123@cluster0.x4azcc8.mongodb.net/?retryWrites=true&w=majority",
+    "2": "mongodb+srv://dantesbot:wildan18@cluster0.fol5tml.mongodb.net/?retryWrites=true&w=majority"
+}
 
-def list_databases():
+def choose_mongo_uri():
+    """Memilih MongoDB URI untuk digunakan."""
+    print("Pilih MongoDB URI:")
+    for key, uri in mongo_uris.items():
+        print(f"{key} - {uri}")
+    
+    while True:
+        choice = input("Pilih nomor URI (1 atau 2): ")
+        if choice in mongo_uris:
+            return MongoClient(mongo_uris[choice])
+        else:
+            print("Pilihan tidak valid. Silakan coba lagi.")
+
+def list_databases(client):
     """Menampilkan semua database yang tersedia dengan pilihan nomor."""
     databases = client.list_database_names()
     print("Daftar database yang tersedia:")
@@ -18,13 +33,13 @@ def list_databases():
             return
         elif 1 <= db_choice <= len(databases):
             selected_db_name = databases[db_choice - 1]
-            list_collections(selected_db_name)
+            list_collections(client, selected_db_name)
         else:
             print("Pilihan tidak valid. Silakan coba lagi.")
     except ValueError:
         print("Masukkan nomor yang valid.")
 
-def list_collections(db_name):
+def list_collections(client, db_name):
     """Menampilkan semua koleksi dalam database yang dipilih dengan pilihan nomor."""
     db = client[db_name]
     collections = db.list_collection_names()
@@ -56,7 +71,7 @@ def view_collection(db, collection_name):
     for doc in documents:
         print(doc)
 
-def delete_all_collections():
+def delete_all_collections(client):
     """Menghapus semua koleksi dalam semua database."""
     databases = client.list_database_names()
     for db_name in databases:
@@ -66,7 +81,7 @@ def delete_all_collections():
                 db.drop_collection(collection_name)
             print(f"Semua koleksi dalam database '{db_name}' telah dihapus.")
 
-def create_database():
+def create_database(client):
     """Membuat database baru dengan nama yang diminta pengguna dan menampilkan URI."""
     db_name = input("Masukkan nama database baru: ")
     if db_name in client.list_database_names():
@@ -77,12 +92,13 @@ def create_database():
         db.test_collection.insert_one({"test": "data"})
         client.drop_database(db_name)  # Hapus database dan koleksi test setelah mendapatkan URI
         # Membangun URI
-        new_uri = f"mongodb+srv://dantesbot:wildan18@cluster0.fol5tml.mongodb.net/{db_name}?retryWrites=true&w=majority"
         print(f"Database '{db_name}' telah dibuat.")
-        print(f"URI koneksi untuk database '{db_name}': {new_uri}")
+        print(f"URI koneksi untuk database '{db_name}': {client[db_name].client.address}")
 
 def main():
     """Fungsi utama untuk menampilkan menu dan menangani pilihan pengguna."""
+    client = choose_mongo_uri()  # Memilih MongoDB URI saat memulai program
+
     while True:
         print("\nPilihan:")
         print("1 - Lihat database yang tersedia")
@@ -93,11 +109,11 @@ def main():
         choice = input("Pilih opsi (1, 2, 3, 4): ")
 
         if choice == '1':
-            list_databases()
+            list_databases(client)
         elif choice == '2':
-            delete_all_collections()
+            delete_all_collections(client)
         elif choice == '3':
-            create_database()
+            create_database(client)
         elif choice == '4':
             print("Keluar dari program.")
             break
