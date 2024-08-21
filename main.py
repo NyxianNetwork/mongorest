@@ -166,27 +166,26 @@ def edit_collection(db, collection_name):
         print("Tidak ada dokumen yang ditemukan dengan kriteria tersebut.")
 
 def update_document(collection, document):
-    """Memperbarui field dalam dokumen yang dipilih."""
+    """Memperbarui field dalam dokumen yang dipilih secara fleksibel."""
     print("\nDokumen yang dipilih untuk diedit:")
     print(document)
 
+    fields = list(document.keys())
     print("Pilih field yang ingin diubah:")
-    print("1 - ADMIN_IDS")
-    print("2 - FSUB_IDS")
-    choice = input("Pilih opsi (1, 2): ")
+    for i, field in enumerate(fields, start=1):
+        print(f"{i} - {field}")
 
-    if choice == '1':
-        new_value = input("Masukkan nilai baru untuk ADMIN_IDS (pisahkan dengan koma jika lebih dari satu): ")
-        new_ids = [int(x) for x in new_value.split(',')]
-        collection.update_one({"_id": document["_id"]}, {"$set": {"ADMIN_IDS": new_ids}})
-        print("Field ADMIN_IDS telah diperbarui.")
-    elif choice == '2':
-        new_value = input("Masukkan nilai baru untuk FSUB_IDS (pisahkan dengan koma jika lebih dari satu): ")
-        new_ids = [int(x) for x in new_value.split(',')]
-        collection.update_one({"_id": document["_id"]}, {"$set": {"FSUB_IDS": new_ids}})
-        print("Field FSUB_IDS telah diperbarui.")
-    else:
-        print("Pilihan tidak valid.")
+    try:
+        choice = int(input("Pilih opsi (1, 2, 3, ...): "))
+        if 1 <= choice <= len(fields):
+            field_to_update = fields[choice - 1]
+            new_value = input(f"Masukkan nilai baru untuk field '{field_to_update}': ")
+            collection.update_one({"_id": document["_id"]}, {"$set": {field_to_update: new_value}})
+            print(f"Field '{field_to_update}' telah diperbarui.")
+        else:
+            print("Pilihan tidak valid. Silakan coba lagi.")
+    except ValueError:
+        print("Masukkan nomor yang valid.")
 
 def search_and_replace_value(db, collection_name):
     """Mencari dan mengganti semua nilai tertentu dalam seluruh database."""
