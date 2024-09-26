@@ -166,11 +166,22 @@ def edit_collection(db, collection_name):
         print("Tidak ada dokumen yang ditemukan dengan kriteria tersebut.")
 
 def update_document(collection, document):
-    """Memperbarui field dalam dokumen yang dipilih secara fleksibel."""
+    """Memperbarui field dalam dokumen yang dipilih secara fleksibel, termasuk nested fields."""
     print("\nDokumen yang dipilih untuk diedit:")
     print(document)
 
-    fields = list(document.keys())
+    # Fungsi rekursif untuk menavigasi dan menampilkan semua fields, termasuk nested fields
+    def display_fields(doc, parent_key=''):
+        fields = []
+        for key, value in doc.items():
+            full_key = f"{parent_key}.{key}" if parent_key else key
+            fields.append(full_key)
+            if isinstance(value, dict):
+                fields.extend(display_fields(value, full_key))  # Rekursif jika field adalah dict
+        return fields
+
+    fields = display_fields(document)  # Mendapatkan semua fields, termasuk nested fields
+
     print("Pilih field yang ingin diubah:")
     for i, field in enumerate(fields, start=1):
         print(f"{i} - {field}")
@@ -180,6 +191,8 @@ def update_document(collection, document):
         if 1 <= choice <= len(fields):
             field_to_update = fields[choice - 1]
             new_value = input(f"Masukkan nilai baru untuk field '{field_to_update}': ")
+            
+            # Menggunakan dot notation untuk update nested fields
             collection.update_one({"_id": document["_id"]}, {"$set": {field_to_update: new_value}})
             print(f"Field '{field_to_update}' telah diperbarui.")
         else:
