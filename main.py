@@ -124,32 +124,20 @@ def view_collection(db, collection_name):
     limit = 5
 
     while True:
-        skip = page * limit
-        documents = list(collection.find().skip(skip).limit(limit))
-
+        documents = list(collection.find().skip(page * limit).limit(limit))
         if not documents:
-            print("\nTidak ada dokumen untuk ditampilkan.")
+            print("Tidak ada dokumen lagi.")
             break
 
-        print(f"\nMenampilkan halaman {page + 1}:")
-        for i, doc in enumerate(documents, start=1 + skip):
-            print(f"{i}. {doc}")
+        print(f"\nMenampilkan dokumen halaman {page + 1}:")
+        for doc in documents:
+            print(doc)
 
-        print("\n--- Navigasi ---")
-        print("n - Halaman berikutnya")
-        print("p - Halaman sebelumnya")
-        print("q - Kembali")
-
-        nav = input("Pilih opsi navigasi (n/p/q): ").lower()
-
-        if nav == 'n':
+        next_action = input("Ketik 'n' untuk halaman berikutnya, 'b' untuk kembali: ")
+        if next_action.lower() == 'n':
             page += 1
-        elif nav == 'p' and page > 0:
-            page -= 1
-        elif nav == 'q':
-            break
         else:
-            print("Pilihan tidak valid.")
+            break
 
 def edit_collection(db, collection_name):
     collection = db[collection_name]
@@ -196,7 +184,6 @@ def update_document(collection, document):
         return fields
 
     fields = display_fields(document)
-
     print("Pilih field yang ingin diubah:")
     for i, field in enumerate(fields, start=1):
         print(f"{i} - {field}")
@@ -245,13 +232,80 @@ def create_database(client):
     db = client[db_name]
     print(f"Database '{db_name}' telah dibuat.")
 
+def add_postgres_uri():
+    name = input("Masukkan nomor untuk PostgreSQL URI baru: ")
+    uri = input("Masukkan PostgreSQL URI baru: ")
+    postgres_uris[name] = uri
+    print(f"PostgreSQL URI '{uri}' telah ditambahkan dengan nomor '{name}'.")
+
+def remove_postgres_uri():
+    name = input("Masukkan nomor untuk PostgreSQL URI yang akan dihapus: ")
+    if name in postgres_uris:
+        del postgres_uris[name]
+        print(f"PostgreSQL URI dengan nomor '{name}' telah dihapus.")
+    else:
+        print("Nomor PostgreSQL URI tidak ditemukan.")
+
+def choose_postgres_uri():
+    print("Pilih PostgreSQL URI:")
+    for key, uri in postgres_uris.items():
+        print(f"{key} - {uri}")
+
+    while True:
+        choice = input("Pilih nomor URI: ")
+        if choice in postgres_uris:
+            try:
+                conn = psycopg2.connect(postgres_uris[choice])
+                return conn
+            except psycopg2.Error as e:
+                print(f"Gagal terhubung ke PostgreSQL: {e}")
+                return None
+        else:
+            print("Pilihan tidak valid. Silakan coba lagi.")
+
+def list_postgres_databases(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+    tables = cursor.fetchall()
+    print("Daftar tabel yang tersedia:")
+    for i, table_name in enumerate(tables, start=1):
+        print(f"{i}. {table_name[0]}")
+
+    try:
+        table_choice = int(input("Pilih nomor tabel untuk melihat data atau opsi lain (atau 0 untuk kembali): "))
+        if table_choice == 0:
+            return
+        elif 1 <= table_choice <= len(tables):
+            selected_table_name = tables[table_choice - 1][0]
+            view_postgres_table_data(conn, selected_table_name)
+        else:
+            print("Pilihan tidak valid. Silakan coba lagi.")
+    except ValueError:
+        print("Masukkan nomor yang valid.")
+
+def view_postgres_table_data(conn, table_name):
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT * FROM {table_name} LIMIT 5")
+    rows = cursor.fetchall()
+    columns = [desc[0] for desc in cursor.description]
+
+    print(f"Beberapa data dalam tabel '{table_name}':")
+    print(columns)
+    for row in rows:
+        print(row)
+
 def main():
     while True:
         print("\nPilihan:")
         print("1 - Pilih MongoDB URI")
-        print("2 - Keluar")
+        print("2 - Pilih PostgreSQL URI")
+        print("3 - Tambah MongoDB URI")
+        print("4 - Tambah PostgreSQL URI")
+        print("5 - Hapus MongoDB URI")
+        print("6 - Hapus PostgreSQL URI")
+        print("7 - Keluar")
 
-        choice = input("Pilih opsi (1, 2): ")
+        choice = input("Pilih opsi (1, 2, 3, 4, 5, 6, 7): ")
 
         if choice == '1':
             client = choose_mongo_uri()
@@ -275,6 +329,31 @@ def main():
                 else:
                     print("Pilihan tidak valid. Silakan coba lagi.")
         elif choice == '2':
+            conn = choose_postgres_uri()
+            if conn:
+                while True:
+                    print("\nPilihan:")
+                    print("1 - Lihat tabel PostgreSQL yang tersedia")
+                    print("2 - Kembali")
+
+                    choice = input("Pilih opsi (1, 2): ")
+
+                    if choice == '1':
+                        list_postgres_databases(conn)
+                    elif choice == '2':
+                        conn.close()
+                        break
+                    else:
+                        print("Pilihan tidak valid. Silakan coba lagi.")
+        elif choice == '3':
+            add_mongo_uri()
+        elif choice == '4':
+            add_postgres_uri()
+        elif choice == '5':
+            remove_mongo_uri()
+        elif choice == '6':
+            remove_postgres_uri()
+        elif choice == '7':
             print("Keluar dari program.")
             break
         else:
